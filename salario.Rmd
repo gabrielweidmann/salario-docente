@@ -1,0 +1,72 @@
+---
+title: "Monitor del Salario Docente Universitario"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(plotly)
+library(googlesheets4)
+
+url <- "https://docs.google.com/spreadsheets/d/16pj5ENwOeGEES6V5alwDcW8FwdPjTOqjFFho-XZDnwo/edit?usp=sharing"
+
+df <- read_sheet(url, 
+                 sheet = 'DF',
+                 col_names=T)
+df$rtitular <- df$Titular/df$futurizacion
+df$radjunto <- df$Adjunto/df$futurizacion
+df$rjtp <- df$JTP/df$futurizacion
+df <- df %>% mutate(tasa_inf = (inflacion -lag(inflacion))/lag(inflacion))
+
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Salario Docente real a precios actuales
+
+```{r}
+
+
+plot_ly(df,x=~fecha) %>%
+  add_trace(y=~rtitular, type='scatter', mode='lines+markers', name='Titular')%>%
+  add_trace(y=~radjunto, type='scatter', mode='lines+markers', name='Adjunto')%>%
+  add_trace(y=~rjtp, type='scatter', mode='lines+markers', name='JTP')%>%
+  layout(xaxis=list(title="Fecha"),
+         yaxis=list(title="Salario real a precios actuales"))
+
+  
+
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Salario Nominal
+
+```{r}
+plot_ly(df,x=~fecha) %>%
+  add_trace(y=~Titular, type='scatter', mode='lines', name='Titular')%>%
+  add_trace(y=~Adjunto, type='scatter', mode='lines', name='Adjunto')%>%
+  add_trace(y=~JTP, type='scatter', mode='lines', name='JTP')%>%
+  layout(xaxis=list(title="Fecha"),
+         yaxis=list(title="Salario nominal"))
+
+```
+
+### Inflación
+
+```{r}
+plot_ly(df, x=~ fecha) %>%
+  add_trace(y=~tasa_inf*100,
+        type='bar',
+        name='Tasa de inflación mensual')%>%
+  layout(xaxis=list(title="Fecha"),
+         yaxis=list(title="Tasa mensual de inflación"))
+```
+
