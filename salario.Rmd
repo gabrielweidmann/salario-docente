@@ -2,8 +2,8 @@
 title: "Monitor del Salario Docente Universitario"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
-    vertical_layout: fill
+    orientation: rows
+    vertical_layout: scroll
 ---
 
 ```{r setup, include=FALSE}
@@ -17,16 +17,58 @@ url <- "https://docs.google.com/spreadsheets/d/16pj5ENwOeGEES6V5alwDcW8FwdPjTOqj
 df <- read_sheet(url, 
                  sheet = 'DF',
                  col_names=T)
+
 df$rtitular <- df$Titular/df$futurizacion
+
 df$radjunto <- df$Adjunto/df$futurizacion
+
 df$rjtp <- df$JTP/df$futurizacion
+
 df <- df %>% mutate(tasa_inf = (inflacion -lag(inflacion))/lag(inflacion))
+
+df <- df %>% mutate(var_anual_tit = 
+                      (rtitular - lag(rtitular,12))/lag(rtitular,12))
+
+df <- df %>% mutate(var_anual_ad = 
+                      (radjunto - lag(radjunto,12))/lag(radjunto,12))
+
+df <- df %>% mutate(var_anual_jtp = 
+                      (rjtp - lag(rjtp,12))/lag(rjtp,12))
+
 
 ```
 
-Column {data-width=650}
+Row
 -----------------------------------------------------------------------
 
+
+### Variación del Salario Real del Profesor Titular
+
+```{r}
+valueBox(round(tail(df$var_anual_tit, n=1)*100, 2), icon="fa-percent")
+
+```
+
+
+### Variación del Salario Real del Profesor Adjunto
+
+```{r}
+valueBox(round(tail(df$var_anual_ad, n=1)*100, 2), icon="fa-percent")
+
+```
+
+
+### Variación del Salario Real del Profesor JTP
+
+```{r}
+valueBox(round(tail(df$var_anual_jtp, n=1)*100, 2), icon="fa-percent")
+
+```
+
+
+
+Row
+-----------------------------------------------------------------------
 ### Salario Docente real a precios actuales
 
 ```{r}
@@ -44,7 +86,7 @@ plot_ly(df,x=~fecha) %>%
 
 ```
 
-Column {data-width=350}
+Row
 -----------------------------------------------------------------------
 
 ### Salario Nominal
